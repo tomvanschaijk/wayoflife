@@ -1,0 +1,37 @@
+Timer unit: 1e-07 s
+
+Total time: 0.0843131 s
+File: d:\Documents\Projects\Python\wayoflife\conwaygolgrid.py
+Function: __perform_update at line 80
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    80                                               @staticmethod
+    81                                               # @njit(fastmath=True, cache=True)
+    82                                               def __perform_update(cells: np.ndarray, background_color: tuple[int, int, int],
+    83                                                                    new_color: tuple[int, int, int], survivor_color: tuple[int, int, int],
+    84                                                                    dead_color: tuple[int, int, int]
+    85                                                                    ) -> tuple[np.ndarray, list[tuple[int, int, tuple[int, int, int]]]]:
+    86                                                   """Updates the grid to the next step in the iteration, following Conway's Game of Life
+    87                                                   rules. Evaluates each cell, and returns the list of cells to be redrawn and their colors
+    88                                                   """
+    89         1         12.0     12.0      0.0          cells_to_redraw: list[tuple[int, int, tuple[int, int, int]]] = []
+    90         1       2817.0   2817.0      0.3          updated_cells = np.array([[False] * cells.shape[1]] * cells.shape[0])
+    91      4800      98785.0     20.6     11.7          for row, col in np.ndindex(cells.shape):
+    92      4800     649542.0    135.3     77.0              alive_neighbours = (np.sum(cells[max(0, row-1):row+2, max(0, col-1):col+2])
+    93      4800      25120.0      5.2      3.0                                  - cells[row, col])
+    94      4451      22945.0      5.2      2.7              if cells[row, col]:
+    95       317       1483.0      4.7      0.2                  if alive_neighbours == 2 or alive_neighbours == 3:
+    96        32        208.0      6.5      0.0                      updated_cells[row, col] = True
+    97        32        168.0      5.2      0.0                      cells_to_redraw.append((row, col, survivor_color))
+    98                                                           else:
+    99       317       1678.0      5.3      0.2                      cells_to_redraw.append((row, col, dead_color))
+   100                                                       else:
+   101      4377      17058.0      3.9      2.0                  if alive_neighbours == 3:
+   102        74        491.0      6.6      0.1                      updated_cells[row, col] = True
+   103        74        386.0      5.2      0.0                      cells_to_redraw.append((row, col, new_color))
+   104                                                           else:
+   105      4377      22435.0      5.1      2.7                      cells_to_redraw.append((row, col, background_color))
+   106                                           
+   107         1          3.0      3.0      0.0          return updated_cells, cells_to_redraw
+
