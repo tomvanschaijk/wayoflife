@@ -17,8 +17,8 @@ def create_grid() -> tuple[ConwayGoLGrid, pg.Surface]:
 
     pg.init()
     screen = pg.display.set_mode((width, height))
-    grid = ConwayGoLGrid.new(10, width, height, background_color, grid_color,
-                             new_color, survivor_color, dead_color)
+    grid = ConwayGoLGrid.new(10, width, height, screen, background_color, grid_color,
+                             new_color, survivor_color, dead_color, 1)
     return grid, screen
 
 
@@ -37,8 +37,8 @@ def profile_update(grid: ConwayGoLGrid, screen: pg.Surface, file) -> None:
     wrapped = profiler(grid._ConwayGoLGrid__perform_update)
     wrapped(grid._ConwayGoLGrid__cells, grid._ConwayGoLGrid__neighbour_count,
             grid._ConwayGoLGrid__new_cells, grid._ConwayGoLGrid__survivor_cells,
-            grid._ConwayGoLGrid__dead_cells, grid.rows, grid.columns, background_color,
-            new_color, survivor_color, dead_color)
+            grid._ConwayGoLGrid__dead_cells, new_color, survivor_color,
+            dead_color, background_color)
 
     update_screen(grid, screen)
 
