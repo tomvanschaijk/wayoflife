@@ -5,9 +5,7 @@ from line_profiler import LineProfiler
 from conwaygolgrid import ConwayGoLGrid
 
 background_color = (5, 5, 5)
-new_color = (50, 250, 5)
-survivor_color = (40, 100, 40)
-dead_color = (60, 0, 0)
+cell_color = (50, 250, 5)
 
 
 def create_grid() -> tuple[ConwayGoLGrid, pg.Surface]:
@@ -18,7 +16,7 @@ def create_grid() -> tuple[ConwayGoLGrid, pg.Surface]:
     pg.init()
     screen = pg.display.set_mode((width, height))
     grid = ConwayGoLGrid.new(10, width, height, screen, background_color, grid_color,
-                             new_color, survivor_color, dead_color, 1)
+                             cell_color, 1)
     return grid, screen
 
 
@@ -36,9 +34,7 @@ def profile_update(grid: ConwayGoLGrid, screen: pg.Surface, file) -> None:
 
     wrapped = profiler(grid._ConwayGoLGrid__perform_update)
     wrapped(grid._ConwayGoLGrid__cells, grid._ConwayGoLGrid__neighbour_count,
-            grid._ConwayGoLGrid__new_cells, grid._ConwayGoLGrid__survivor_cells,
-            grid._ConwayGoLGrid__dead_cells, new_color, survivor_color,
-            dead_color, background_color)
+            grid._ConwayGoLGrid__alive_cells, cell_color, background_color)
 
     update_screen(grid, screen)
 

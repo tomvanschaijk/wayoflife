@@ -1,9 +1,6 @@
 """
-My implementation of Conway's Game of Life. The twist in this implementation is that it
-doesn't only consider cells to be alive or dead. A cell can have several states:
-New: a cell that just became alive because of the game rules
-Survivor: an alive cell that hasn't changed state in the current iteration
-Dead: a celll that is marked as dead, and will be removed from the game in the next iteration
+My implementation of Conway's Game of Life. Compared to the main develop branch,
+cells in this version will only have 2 states: alive and dead.
 
 This small change in how cells are visualised allows you to follow the evolution of each
 cell and the environment as a whole. Coupled with that, there are a number of inputs you
@@ -11,9 +8,7 @@ can do to interact with the environment:
 * the game can be paused at any time
 * a random cell layout can be generated
 * new cells can be injected into the grid
-* alive and dead cells can switch places
-* all surviving cells can be removed
-* surviving cells that haven't change states in x iterations can be removed
+* alive cells that haven't change states in x iterations can be removed
 * while the game is paused, you can move through the states one step at a time
 * it's possible to revert to x amount of previous steps
 * colors of all cells can be changed or reset to default values
@@ -26,15 +21,13 @@ import numpy as np
 from conwaygolgrid import ConwayGoLGrid
 
 
-DEFAULT_BACKGROUND_COLOR = (5, 5, 5)
+DEFAULT_BACKGROUND_COLOR = (0, 0, 0)
 DEFAULT_GRID_COLOR = (20, 20, 20)
-DEFAULT_NEW_COLOR = (50, 250, 5)
-DEFAULT_SURVIVOR_COLOR = (40, 100, 40)
-DEFAULT_DEAD_COLOR = (60, 0, 0)
-MIN_FPS, MAX_FPS, DEFAULT_FPS = 5, 120, 60
+DEFAULT_CELL_COLOR = (70, 212, 202)
+MIN_FPS, MAX_FPS, DEFAULT_FPS = 5, 244, 60
 WIDTH, HEIGHT = 1900, 1200
 CELL_SIZES, DEFAULT_CELL_SIZE = [3, 5, 10, 20, 50], 5
-HELP_MENU_DIMENSIONS = (550, 660)
+HELP_MENU_DIMENSIONS = (550, 580)
 HELP_MENU_TOPLEFT = (20, 20)
 HELP_MENU_COLOR, HELP_MENU_ALPHA = (150, 150, 150), 200
 STATS_COLOR = (100, 100, 100)
@@ -51,17 +44,12 @@ HELP_MENU_TEXT = [
     "LCLICK - create a new cell at the mouse position",
     "RCLICK - clear the cell at the mouse position",
     "C - create a new random grid layout",
-    "I - inverts new and dead cells: new cells die, dead cells spring to life!",
     "L - burst of life: sends in a random number of new cells to the grid",
-    "M - 'mercy' killing..? wipe out all survivors",
-    f"P - purge out any survivors that have not changed status in {PURGE_TRIGGER} iterations",
+    f"P - purge out any alive cells that have not changed status in {PURGE_TRIGGER} iterations",
     "F - move the game forward 1 step (only when paused)",
     f"W - wait what..? back up a step (max {MAX_PREVIOUS_GRID_STATES} steps, only when paused)",
-    "N - change the color of new cells",
-    "S - change the color of survivor cells",
-    "D - change the color of dead cells",
-    "A - change the color of all cells",
-    "R - reset the colors of all cells to their default values",
+    "A - change the color of alive cells",
+    "R - reset the colors of cells to their default values",
     f"↑ - reset the game and increase the cell size (max {CELL_SIZES[len(CELL_SIZES)-1]})",
     f"↓ - reset the game and decrease the cell size (min {CELL_SIZES[0]})",
     f"MWHEELUP - increase the target framerate (max {MAX_FPS})",
@@ -78,8 +66,8 @@ def initialize(width: int, height: int, cell_size: int
     screen = pg.display.set_mode((width, height), pg.RESIZABLE)
     help_menu = create_help_menu()
     grid = ConwayGoLGrid.new(cell_size, width, height, pg.Surface((width, height)),
-                             DEFAULT_BACKGROUND_COLOR, DEFAULT_GRID_COLOR, DEFAULT_NEW_COLOR,
-                             DEFAULT_SURVIVOR_COLOR, DEFAULT_DEAD_COLOR, MAX_PREVIOUS_GRID_STATES)
+                             DEFAULT_BACKGROUND_COLOR, DEFAULT_GRID_COLOR, DEFAULT_CELL_COLOR,
+                             MAX_PREVIOUS_GRID_STATES)
     return grid, screen, help_menu, pg.time.Clock()
 
 
@@ -115,7 +103,7 @@ def update_stats_display(text: str) -> None:
 
 def load_random_cell_layout(grid: ConwayGoLGrid) -> None:
     """Load up the grid with a random set of live cells"""
-    cells = np.random.choice([False, True], grid.shape, p=[0.93, 0.07])
+    cells = np.random.choice([False, True], grid.shape, p=[0.9, 0.1])
     grid.create_cell_layout(cells)
 
 
@@ -139,9 +127,7 @@ def change_grid_size(grid: ConwayGoLGrid, running: bool, direction: int) -> None
 
 def reset_colors(grid: ConwayGoLGrid) -> None:
     """Resets the grid colors to their default values"""
-    grid.change_new_color(DEFAULT_NEW_COLOR)
-    grid.change_survivor_color(DEFAULT_SURVIVOR_COLOR)
-    grid.change_dead_color(DEFAULT_DEAD_COLOR)
+    grid.change_cell_color(DEFAULT_CELL_COLOR)
 
 
 def handle_events(grid: ConwayGoLGrid, running: bool, draw_menu: bool,
@@ -169,26 +155,16 @@ def handle_events(grid: ConwayGoLGrid, running: bool, draw_menu: bool,
                         running = False
                         grid.reset()
                     case pg.K_c: load_random_cell_layout(grid)
-                    case pg.K_i: grid.invert()
                     case pg.K_l: lifewave(grid, running)
-                    case pg.K_m: grid.wipe_survivors()
-                    case pg.K_p: grid.purge_survivors(PURGE_TRIGGER)
+                    case pg.K_p: grid.purge(PURGE_TRIGGER)
                     case pg.K_f:
                         if not running:
                             grid.update()
                     case pg.K_w:
                         if not running:
                             grid.reverse()
-                    case pg.K_n:
-                        grid.change_new_color((randint(0,255), randint(0,255), randint(0,255)))
-                    case pg.K_s:
-                        grid.change_survivor_color((randint(0,255), randint(0,255), randint(0,255)))
-                    case pg.K_d:
-                        grid.change_dead_color((randint(0,255), randint(0,255), randint(0,255)))
                     case pg.K_a:
-                        grid.change_all_colors(((randint(0,255), randint(0,255), randint(0,255)),
-                                                (randint(0,255), randint(0,255), randint(0,255)),
-                                                (randint(0,255), randint(0,255), randint(0,255))))
+                        grid.change_cell_color((randint(0,255), randint(0,255), randint(0,255)))
                     case pg.K_r: reset_colors(grid)
                     case pg.K_UP: change_grid_size(grid, running, 1)
                     case pg.K_DOWN: change_grid_size(grid, running, -1)
