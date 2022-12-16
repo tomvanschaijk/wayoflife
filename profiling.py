@@ -35,7 +35,9 @@ def profile_update(grid: ConwayGoLGrid, screen: pg.Surface, file) -> None:
     profiler = LineProfiler()
 
     wrapped = profiler(grid._ConwayGoLGrid__perform_update)
-    wrapped(grid._ConwayGoLGrid__cells, background_color, new_color, survivor_color, dead_color)
+    wrapped(grid._ConwayGoLGrid__cells, grid._ConwayGoLGrid__new_cells,
+            grid._ConwayGoLGrid__survivor_cells, grid._ConwayGoLGrid__dead_cells,
+            grid.rows, grid.columns, background_color, new_color, survivor_color, dead_color)
 
     update_screen(grid, screen)
 

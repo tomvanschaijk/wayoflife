@@ -14,7 +14,7 @@ DEAD_COLOR = (60, 0, 0)
 STATS_COLOR, STATS_ALPHA = (100, 100, 100), 180
 FPS = 60
 WIDTH, HEIGHT = 1920, 1200
-CELL_SIZE = 10
+CELL_SIZE = 5
 
 
 def initialize(width: int, height: int, cell_size: int
@@ -31,7 +31,7 @@ def initialize(width: int, height: int, cell_size: int
 
 def load_random_cell_layout(grid: ConwayGoLGrid) -> None:
     """Load up the grid with a random set of live cells"""
-    cells = np.random.choice([0, 1], grid.shape, p=[0.93, 0.07])
+    cells = np.random.choice([False, True], grid.shape, p=[0.93, 0.07])
     grid.create_cell_layout(cells)
 
 
@@ -45,6 +45,9 @@ def handle_events(grid: ConwayGoLGrid, running: bool) -> tuple[bool, bool]:
                 match event.key:
                     case pg.K_SPACE:
                         running = not running
+                    case pg.K_RETURN:
+                        running = False
+                        grid.reset()
                     case pg.K_c: load_random_cell_layout(grid)
 
         mouse_button = pg.mouse.get_pressed()
