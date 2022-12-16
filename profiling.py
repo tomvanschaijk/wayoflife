@@ -35,9 +35,10 @@ def profile_update(grid: ConwayGoLGrid, screen: pg.Surface, file) -> None:
     profiler = LineProfiler()
 
     wrapped = profiler(grid._ConwayGoLGrid__perform_update)
-    wrapped(grid._ConwayGoLGrid__cells, grid._ConwayGoLGrid__new_cells,
-            grid._ConwayGoLGrid__survivor_cells, grid._ConwayGoLGrid__dead_cells,
-            grid.rows, grid.columns, background_color, new_color, survivor_color, dead_color)
+    wrapped(grid._ConwayGoLGrid__cells, grid._ConwayGoLGrid__neighbour_count,
+            grid._ConwayGoLGrid__new_cells, grid._ConwayGoLGrid__survivor_cells,
+            grid._ConwayGoLGrid__dead_cells, grid.rows, grid.columns, background_color,
+            new_color, survivor_color, dead_color)
 
     update_screen(grid, screen)
 
@@ -50,7 +51,7 @@ def main() -> None:
 
     try:
         grid, screen = create_grid()
-        cells = np.random.choice([0, 1], grid.shape, p=[0.93, 0.07])
+        cells = np.random.choice([False, True], grid.shape, p=[0.93, 0.07])
         grid.create_cell_layout(cells)
         update_screen(grid, screen)
 

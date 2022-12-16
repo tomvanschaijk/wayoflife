@@ -26,6 +26,7 @@ class ConwayGoLGrid():
         self.__survivor_color = survivor_color
         self.__dead_color = dead_color
         self.__cells: np.ndarray
+        self.__neighbour_count: np.ndarray
         self.__new_cells: set[tuple[(int, int)]]
         self.__survivor_cells: set[tuple[(int, int)]]
         self.__dead_cells: set[tuple[(int, int)]]
@@ -63,7 +64,7 @@ class ConwayGoLGrid():
             grid_color: tuple[int, int, int], new_color: tuple[int, int, int],
             survivor_color: tuple[int, int, int], dead_color: tuple[int, int, int]):
         """Creates a new grid after successful validation of values"""
-        # possible todo:  validate the values sent in, wrap the value in a "Result" object
+        # possible todo: validate the values sent in, wrap the value in a "Result" object
         # holding not only the Grid if succesfully created, but also other values such
         # as a bool value signifying successful creation, a list of errors/warnings, ...
         return ConwayGoLGrid(cell_size, width, height, background_color, grid_color,
@@ -73,21 +74,22 @@ class ConwayGoLGrid():
         """Updates the grid to the next step in the iteration, following Conway's Game
         of Life rules. Evaluates the grid, and redraws all changed cells"""
         (updated_cells,
-         cells_to_redraw) = ConwayGoLGrid.__perform_update(self.__cells, self.__new_cells,
-                                                         self.__survivor_cells, self.__dead_cells,
-                                                         self.__rows, self.__columns,
-                                                         self.__new_color, self.__survivor_color,
-                                                         self.__dead_color, self.__background_color)
+         cells_to_redraw) = ConwayGoLGrid.__perform_update(self.__cells, self.__neighbour_count,
+                                                           self.__new_cells, self.__survivor_cells,
+                                                           self.__dead_cells, self.__rows,
+                                                           self.__columns, self.__new_color,
+                                                           self.__survivor_color, self.__dead_color,
+                                                           self.__background_color)
         self.__cells = updated_cells
         self.__draw_cells(cells_to_redraw)
 
     @staticmethod
     @njit(fastmath=True, cache=True)
-    def __perform_update(cells: np.ndarray, new_cells: set[tuple[int, int]],
-                         survivor_cells: set[tuple[int, int]], dead_cells: set[tuple[int, int]],
-                         rows: int, columns: int, new_color: tuple[int, int, int],
-                         survivor_color: tuple[int, int, int], dead_color: tuple[int, int, int],
-                         background_color: tuple[int, int, int]
+    def __perform_update(cells: np.ndarray, neighbour_count: np.ndarray,
+                         new_cells: set[tuple[int, int]], survivor_cells: set[tuple[int, int]],
+                         dead_cells: set[tuple[int, int]], rows: int, columns: int,
+                         new_color: tuple[int, int, int], survivor_color: tuple[int, int, int],
+                         dead_color: tuple[int, int, int], background_color: tuple[int, int, int]
                          ) -> tuple[np.ndarray, list[tuple[int, int, tuple[int, int, int]]]]:
         """Updates the grid to the next step in the iteration, following Conway's Game of Life
         rules. Evaluates each cell, and returns the list of cells to be redrawn and their colors
@@ -104,12 +106,12 @@ class ConwayGoLGrid():
                     cells_to_evaluate.add((i, j))
 
         updated_cells = np.array([[False] * cells.shape[1]] * cells.shape[0])
+        neighbour_count_to_update: list[tuple[tuple[int, int], int]] = []
         cells_to_redraw: list[tuple[int, int, tuple[int, int, int]]] = []
         for row, col in cells_to_evaluate:
             cell = (row, col)
             # Count the alive cells around the current cell
-            alive_neighbours = (np.sum(cells[max(0, row-1):row+2, max(0, col-1):col+2])
-                                - cells[cell])
+            alive_neighbours = neighbour_count[row, col]
             if cells[cell]:
                 if alive_neighbours in (2, 3):
                     updated_cells[cell] = True
@@ -119,6 +121,7 @@ class ConwayGoLGrid():
                     dead_cells.discard(cell)
                 else:
                     cells_to_redraw.append((row, col, dead_color))
+                    neighbour_count_to_update.append((cell, -1))
                     dead_cells.add(cell)
                     new_cells.discard(cell)
                     survivor_cells.discard(cell)
@@ -126,33 +129,52 @@ class ConwayGoLGrid():
                 if alive_neighbours == 3:
                     updated_cells[cell] = True
                     cells_to_redraw.append((row, col, new_color))
+                    neighbour_count_to_update.append((cell, 1))
                     new_cells.add(cell)
                     survivor_cells.discard(cell)
                     dead_cells.discard(cell)
                 else:
                     cells_to_redraw.append((row, col, background_color))
                     dead_cells.discard(cell)
+
+        for coordinates, delta in neighbour_count_to_update:
+            row, col = coordinates
+            for i in range(max(0, row-1), min(row+2, rows)):
+                for j in range(max(0, col-1), min(col+2, columns)):
+                    if (i, j) != coordinates:
+                        neighbour_count[(i, j)] += delta
+
         return updated_cells, cells_to_redraw
 
     def reset(self) -> None:
         """Resets the entire grid"""
         self.__rows = self.__height // self.__cell_size
         self.__columns = self.__width // self.__cell_size
-        self.__cells = np.full((self.__height // self.__cell_size,
-                                self.__width // self.__cell_size),
-                               False, dtype=bool)
+        self.__cells = np.full((self.__rows, self.__columns), False, dtype=bool)
+        self.__neighbour_count = np.zeros((self.__rows, self.__columns), dtype=int)
         # The initial entry (-99, -99) is added since Numba can not handle empty sets
         self.__new_cells = set([(-99, -99)])
         self.__survivor_cells = set([(-99, -99)])
         self.__dead_cells = set([(-99, -99)])
         self.__draw_grid()
 
+    def __update_neighbour_count(self, updated_cell_coordinates: tuple[int, int]) -> None:
+        """Update the neighbours of the cell with the given coordinates, and update each
+        of their neighbour count values, depending on the value of the given cell"""
+        row, col = updated_cell_coordinates
+        neighbour_delta = 1 if self.__cells[updated_cell_coordinates] else -1
+        for i in range(max(0, row-1), min(row+2, self.__rows)):
+            for j in range(max(0, col-1), min(col+2, self.__columns)):
+                if (i, j) != updated_cell_coordinates:
+                    self.__neighbour_count[(i, j)] += neighbour_delta
+
     def resurrect_cell(self, coordinates: tuple[int, int]) -> None:
         """Brings a cell in the grid to life"""
-        if coordinates in self.__new_cells:
+        if coordinates in self.__new_cells or coordinates in self.__survivor_cells:
             return
 
         self.__cells[coordinates] = True
+        self.__update_neighbour_count(coordinates)
         self.__new_cells.add(coordinates)
         self.__survivor_cells.discard(coordinates)
         self.__dead_cells.discard(coordinates)
@@ -160,10 +182,14 @@ class ConwayGoLGrid():
 
     def clear_cell(self, coordinates: tuple[int, int]) -> None:
         """Clears a cell from the grid"""
-        self.__cells[coordinates] = False
+        if self.__cells[coordinates]:
+            self.__cells[coordinates] = False
+            self.__update_neighbour_count(coordinates)
+
         self.__new_cells.discard(coordinates)
         self.__survivor_cells.discard(coordinates)
         self.__dead_cells.discard(coordinates)
+
         self.__draw_cells([(coordinates[0], coordinates[1], self.__background_color)])
 
     def create_cell_layout(self, cells: np.ndarray) ->  None:
@@ -171,11 +197,15 @@ class ConwayGoLGrid():
         if cells.shape != (self.__rows, self.__columns):
             return
 
-        self.__cells = cells.copy()
+        self.__cells = cells
+        self.__neighbour_count = np.zeros((self.__rows, self.__columns), dtype=int)
         self.__new_cells = set([(-99, -99)])
-        for coordinate in np.ndindex(cells.shape):
-            if cells[coordinate]:
-                self.__new_cells.add(coordinate)
+        for row, col in np.ndindex(self.__neighbour_count.shape):
+            self.__neighbour_count[(row, col)] = (np.sum(self.__cells[max(0, row-1):row+2,
+                                                                      max(0, col-1):col+2])
+                                                  - (1 if self.__cells[(row, col)] else 0))
+            if cells[(row, col)]:
+                self.__new_cells.add((row, col))
         self.__survivor_cells = set([(-99, -99)])
         self.__dead_cells = set([(-99, -99)])
         self.__draw_grid()

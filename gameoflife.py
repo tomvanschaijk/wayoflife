@@ -48,7 +48,9 @@ def handle_events(grid: ConwayGoLGrid, running: bool) -> tuple[bool, bool]:
                     case pg.K_RETURN:
                         running = False
                         grid.reset()
-                    case pg.K_c: load_random_cell_layout(grid)
+                    case pg.K_c:
+                        running = False
+                        load_random_cell_layout(grid)
 
         mouse_button = pg.mouse.get_pressed()
         if mouse_button[0] or mouse_button[2]:
