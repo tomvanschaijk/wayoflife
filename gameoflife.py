@@ -20,7 +20,7 @@ can do to interact with the environment:
 * cell size can be changed to a predefined set of sizes
 * target framerate can be changed
 """
-from random import randint
+from random import randint, randrange
 import pygame as pg
 import numpy as np
 from conwaygolgrid import ConwayGoLGrid
@@ -33,8 +33,9 @@ DEFAULT_SURVIVOR_COLOR = (40, 100, 40)
 DEFAULT_DEAD_COLOR = (60, 0, 0)
 MIN_FPS, MAX_FPS, DEFAULT_FPS = 5, 120, 60
 WIDTH, HEIGHT = 1900, 1200
-CELL_SIZES, DEFAULT_CELL_SIZE = [3, 5, 10, 20, 50], 5
-HELP_MENU_DIMENSIONS = (550, 660)
+CELL_SIZES, DEFAULT_CELL_SIZE = [3, 5, 10, 20], 5
+GLIDERS_PER_CELL_SIZE = [200, 25, 15, 2, 0]
+HELP_MENU_DIMENSIONS = (550, 700)
 HELP_MENU_TOPLEFT = (20, 20)
 HELP_MENU_COLOR, HELP_MENU_ALPHA = (150, 150, 150), 200
 STATS_COLOR = (100, 100, 100)
@@ -66,6 +67,7 @@ HELP_MENU_TEXT = [
     f"↓ - reset the game and decrease the cell size (min {CELL_SIZES[0]})",
     f"MWHEELUP - increase the target framerate (max {MAX_FPS})",
     f"MWHEELDOWN - decrease the target framerate (min {MIN_FPS})",
+    "NUMKEY 1 - 5: add some pre-built patterns to the grid"
     ]
 
 
@@ -119,6 +121,73 @@ def load_random_cell_layout(grid: ConwayGoLGrid) -> None:
     grid.create_cell_layout(cells)
 
 
+def load_random_horizontals(grid: ConwayGoLGrid) -> None:
+    """Load up the grid with a number of vertical stripes"""
+    cells = np.array([[not j % 33
+                       for i in range(grid.shape[1])]
+                        for j in range(grid.shape[0])])
+    grid.overlay_new_cells(cells, redraw=True)
+
+
+def load_random_verticals(grid: ConwayGoLGrid) -> None:
+    """Load up the grid with a number of vertical stripes"""
+    cells = np.array([[not i % 33
+                       for i in range(grid.shape[1])]
+                        for j in range(grid.shape[0])])
+    grid.overlay_new_cells(cells, redraw=True)
+
+
+def load_diagonal_cross(grid: ConwayGoLGrid) -> None:
+    """Load up the grid with a cross through the diagonals"""
+    cells = np.full(grid.shape, False, dtype=bool)
+    rows, cols = grid.shape
+    for row in range(rows):
+        cells[row, (row + (cols - rows) // 2)] = True 
+        cells[rows - row - 1, (row + (cols - rows) // 2)] = True
+    grid.overlay_new_cells(cells, redraw=True)
+
+
+def load_topbottom_cross(grid: ConwayGoLGrid) -> None:
+    """Load up the grid with a straight cross"""
+    rows, cols = grid.shape
+    cells = np.array([[i == cols // 2 or j == rows // 2
+                       for i in range(cols)]
+                        for j in range(rows)])
+    grid.overlay_new_cells(cells, redraw=True)
+
+
+def add_glider_se(cells: np.ndarray, x: int, y: int) -> np.ndarray:
+    """Add South-East facing glider to the grid at the given position"""
+    pos = [(x, y), (x + 1, y + 1), (x - 1, y + 2), (x, y + 2), (x + 1, y + 2)]
+    for i, j in pos:
+        cells[j, i] = True
+    return cells
+
+
+def add_glider_nw(cells: np.ndarray, x: int, y: int) -> np.ndarray:
+    """Add North-West facing glider to the grid at the given position"""
+    pos = [(x, y), (x - 2, y - 1), (x - 2, y), (x - 2, y + 1), (x - 1, y - 1)]
+    for i, j in pos:
+        cells[j, i] = True
+    return cells
+
+
+def load_glider_armies(grid: ConwayGoLGrid) -> None:
+    """Draw 2 opposing glider armies on the grid"""
+    rows, cols = grid.shape
+    cells = np.full(grid.shape, False, dtype=bool)
+    index = CELL_SIZES.index(grid.cell_size)
+    gliders = GLIDERS_PER_CELL_SIZE[index]
+    for _ in range(gliders):
+        i, j = (randrange(grid.cell_size, cols // 2 + cols // 4, grid.cell_size),
+                  randrange(grid.cell_size, rows // 2))
+        cells = add_glider_se(cells, i, j)
+        i, j = (randrange(cols // 2 - cols // 4, cols - grid.cell_size),
+                randrange(rows // 2, rows - grid.cell_size))
+        cells = add_glider_nw(cells, i, j)
+    grid.overlay_new_cells(cells, redraw=True)
+
+
 def lifewave(grid: ConwayGoLGrid, running: bool) -> None:
     """Send a wave of random live cells to the grid"""
     cells = np.random.choice([False, True], grid.shape, p=[0.97, 0.03])
@@ -165,7 +234,7 @@ def handle_events(grid: ConwayGoLGrid, running: bool, draw_menu: bool,
                     case pg.K_F4: draw_stats = not draw_stats
                     case pg.K_q: return False, False, False, True, fps
                     case pg.K_SPACE: running = not running
-                    case pg.K_RETURN:
+                    case pg.K_RETURN | pg.K_KP_ENTER:
                         running = False
                         grid.reset()
                     case pg.K_c: load_random_cell_layout(grid)
@@ -192,6 +261,11 @@ def handle_events(grid: ConwayGoLGrid, running: bool, draw_menu: bool,
                     case pg.K_r: reset_colors(grid)
                     case pg.K_UP: change_grid_size(grid, running, 1)
                     case pg.K_DOWN: change_grid_size(grid, running, -1)
+                    case pg.K_KP1: load_random_verticals(grid)
+                    case pg.K_KP2: load_random_horizontals(grid)
+                    case pg.K_KP3: load_diagonal_cross(grid)
+                    case pg.K_KP4: load_topbottom_cross(grid)
+                    case pg.K_KP5: load_glider_armies(grid)
 
         mouse_button = pg.mouse.get_pressed()
         if mouse_button[0] or mouse_button[2]:
