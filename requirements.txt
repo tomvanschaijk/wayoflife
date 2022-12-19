@@ -1,8 +1,10 @@
-pygame==2.1.2
-numpy==1.23.5
-numba==0.56.4
-line-profiler==4.0.1
 autopep8==2.0.0
+bitarray==2.6.0
+line-profiler==4.0.1
 llvmlite==0.39.1
+numba==0.56.4
+numpy==1.23.5
+opencv-python==4.6.0.66
 pycodestyle==2.10.0
+pygame==2.1.2
 tomli==2.0.1

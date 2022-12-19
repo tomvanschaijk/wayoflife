@@ -2,7 +2,7 @@
 import numpy as np
 import pygame as pg
 from line_profiler import LineProfiler
-from conwaygolgrid import ConwayGoLGrid
+from conwaygolgrid import ConwayGoLGrid, CellSize
 
 background_color = (5, 5, 5)
 new_color = (50, 250, 5)
@@ -17,7 +17,7 @@ def create_grid() -> tuple[ConwayGoLGrid, pg.Surface]:
 
     pg.init()
     screen = pg.display.set_mode((width, height))
-    grid = ConwayGoLGrid.new(10, width, height, screen, background_color, grid_color,
+    grid = ConwayGoLGrid.new(CellSize.XS, width, height, screen, background_color, grid_color,
                              new_color, survivor_color, dead_color, 1)
     return grid, screen
 
