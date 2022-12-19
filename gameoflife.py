@@ -74,7 +74,7 @@ HELP_MENU_TEXT = [
 
 
 def initialize(width: int, height: int, cell_size: CellSize
-               ) -> tuple[ConwayGoLGrid, pg.surface.Surface, pg.surface.Surface, pg.time.Clock]:
+               ) -> tuple[ConwayGoLGrid, pg.Surface, pg.Surface, pg.time.Clock]:
     """Initialize all we need to start running the game"""
     pg.init()
     pg.event.set_allowed([pg.QUIT, pg.KEYDOWN, pg.MOUSEBUTTONDOWN])
@@ -106,7 +106,7 @@ def create_help_menu() -> pg.Surface:
     return help_menu
 
 
-def update_stats_display(text: str) -> pg.surface.Surface:
+def update_stats_display(text: str) -> pg.Surface:
     """Updates the caption"""
     stats_display = pg.Surface((570, 30))
     stats_display.fill(STATS_COLOR)
@@ -355,7 +355,7 @@ def handle_events(grid: ConwayGoLGrid, running: bool, draw_menu: bool,
     return running, draw_menu, draw_stats, False, fps
 
 
-def draw_surfaces(screen: pg.surface.Surface, grid: pg.Surface, help_menu: pg.surface.Surface,
+def draw_surfaces(screen: pg.Surface, grid: pg.Surface, help_menu: pg.Surface,
                   draw_menu: bool, draw_stats: bool, stats_text: str) -> None:
     """Draws all surfaces to the screen"""
     screen_rect = screen.get_rect()
