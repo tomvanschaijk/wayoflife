@@ -104,11 +104,9 @@ class ConwayGoLGrid():
         rows, columns = cells.shape
         # Per alive cell, grab the coordinates from surrounding cells, add them to a set
         # to be able to evaluate each cell once.
-        cells_to_evaluate = set()
-        for row, col in sorted(alive_cells):
-            for i in range(max(0, row-1), min(row+2, rows)):
-                for j in range(max(0, col-1), min(col+2, columns)):
-                    cells_to_evaluate.add((i, j))
+        cells_to_evaluate = set([(i, j) for row, col in alive_cells
+                                for i in range(max(0, row-1), min(row+2, rows))
+                                    for j in range(max(0, col-1), min(col+2, columns))])
 
         updated_cells = np.array([[False] * cells.shape[1]] * cells.shape[0])
         neighbour_count_to_update: list[tuple[tuple[int, int], int]] = []
@@ -205,7 +203,7 @@ class ConwayGoLGrid():
         self.__alive_cells.add(NUMBA_EMPTY_PLACEHOLDER)
         _ = [self.__alive_duration.pop((row, col), None)
                 for row, col in np.ndindex(new_cells.shape)
-                    if new_cells[row, col]]
+                    if (row, col) in self.__alive_cells]
 
         self.__neighbour_count = ConwayGoLGrid.__create_neighbour_count(self.__cells)
 
@@ -294,9 +292,6 @@ class ConwayGoLGrid():
 
     def __store_state(self) -> None:
         """Store the current  state of the grid to be able to reverse"""
-        if len(self.__backups) > 0 and len(self.__backups) >= self.__backups.maxlen:
-            self.__backups.popleft()
-
         backup = Settings(self.__background_color, self.__grid_color, self.__cell_color,
                           copy(self.__cells),copy(self.__alive_cells),
                           copy(self.__neighbour_count), copy(self.__alive_duration),

@@ -109,19 +109,91 @@ def load_random_cell_layout(grid: ConwayGoLGrid) -> None:
     grid.create_cell_layout(cells)
 
 
-def load_random_horizontals(grid: ConwayGoLGrid) -> None:
-    """Load up the grid with a number of vertical stripes"""
-    cells = np.array([[not j % 33
-                       for i in range(grid.shape[1])]
-                        for j in range(grid.shape[0])])
+def load_infinite_growth_line(grid: ConwayGoLGrid) -> None:
+    """Place an infinitely growing line pattern on the grid"""
+    cells = np.full(grid.shape, False, dtype=bool)
+    rows, _ = grid.shape
+    row = rows // 2
+    for col in range(5, 13):
+        cells[row, col] = True
+    for col in range(14, 19):
+        cells[row, col] = True
+    for col in range(22, 25):
+        cells[row, col] = True
+    for col in range(31, 38):
+        cells[row, col] = True
+    for col in range(39, 44):
+        cells[row, col] = True
+    cells = np.logical_or(cells, np.fliplr(cells))
     grid.overlay_new_cells(cells, redraw=True)
 
 
-def load_random_verticals(grid: ConwayGoLGrid) -> None:
-    """Load up the grid with a number of vertical stripes"""
-    cells = np.array([[not i % 33
-                       for i in range(grid.shape[1])]
-                        for j in range(grid.shape[0])])
+def load_infinite_growth_engine(grid: ConwayGoLGrid) -> None:
+    """Place an infinitely growing engine pattern on the grid"""
+    cells = np.full(grid.shape, False, dtype=bool)
+    rows, cols = grid.shape
+    row = rows - rows // 4
+    col = cols - cols // 4
+    cells[row, col] = True
+    cells[row, col+1] = True
+    cells[row, col+2] = True
+    cells[row, col+4] = True
+    cells[row+1, col] = True
+    cells[row+2, col+3] = True
+    cells[row+2, col+4] = True
+    cells[row+3, col+1] = True
+    cells[row+3, col+2] = True
+    cells[row+3, col+4] = True
+    cells[row+4, col] = True
+    cells[row+4, col+2] = True
+    cells[row+4, col+4] = True
+    cells = np.logical_or(cells, np.fliplr(cells))
+    cells = np.logical_or(cells, np.flipud(cells))
+    grid.overlay_new_cells(cells, redraw=True)
+
+
+def load_gosper_glider_gun(grid: ConwayGoLGrid) -> None:
+    """Load up the grid with a Gosper glider gun cross"""
+    cells = np.full(grid.shape, False, dtype=bool)
+    row, col = 6, 6
+    cells[row+4, col] = True
+    cells[row+5, col] = True
+    cells[row+4, col+1] = True
+    cells[row+5, col+1] = True
+    cells[row+4, col+10] = True
+    cells[row+5, col+10] = True
+    cells[row+6, col+10] = True
+    cells[row+3, col+11] = True
+    cells[row+7, col+11] = True
+    cells[row+2, col+12] = True
+    cells[row+8, col+12] = True
+    cells[row+2, col+13] = True
+    cells[row+8, col+13] = True
+    cells[row+5, col+14] = True
+    cells[row+3, col+15] = True
+    cells[row+7, col+15] = True
+    cells[row+4, col+16] = True
+    cells[row+5, col+16] = True
+    cells[row+6, col+16] = True
+    cells[row+5, col+17] = True
+    cells[row+2, col+20] = True
+    cells[row+3, col+20] = True
+    cells[row+4, col+20] = True
+    cells[row+2, col+21] = True
+    cells[row+3, col+21] = True
+    cells[row+4, col+21] = True
+    cells[row+1, col+22] = True
+    cells[row+5, col+22] = True
+    cells[row, col+24] = True
+    cells[row+1, col+24] = True
+    cells[row+5, col+24] = True
+    cells[row+6, col+24] = True
+    cells[row+2, col+34] = True
+    cells[row+3, col+34] = True
+    cells[row+2, col+35] = True
+    cells[row+3, col+35] = True
+    cells = np.logical_or(cells, np.fliplr(cells))
+    cells = np.logical_or(cells, np.flipud(cells))
     grid.overlay_new_cells(cells, redraw=True)
 
 
@@ -129,32 +201,23 @@ def load_diagonal_cross(grid: ConwayGoLGrid) -> None:
     """Load up the grid with a cross through the diagonals"""
     cells = np.full(grid.shape, False, dtype=bool)
     rows, cols = grid.shape
-    for row in range(rows):
-        cells[row, (row + (cols - rows) // 2)] = True 
+    for row in range((rows // 3), rows - (rows // 3)):
+        cells[row, (row + (cols - rows) // 2)] = True
         cells[rows - row - 1, (row + (cols - rows) // 2)] = True
     grid.overlay_new_cells(cells, redraw=True)
 
 
-def load_topbottom_cross(grid: ConwayGoLGrid) -> None:
-    """Load up the grid with a straight cross"""
-    rows, cols = grid.shape
-    cells = np.array([[i == cols // 2 or j == rows // 2
-                       for i in range(cols)]
-                        for j in range(rows)])
-    grid.overlay_new_cells(cells, redraw=True)
-
-
-def add_glider_se(cells: np.ndarray, x: int, y: int) -> np.ndarray:
+def add_glider_se(cells: np.ndarray, row: int, col: int) -> np.ndarray:
     """Add South-East facing glider to the grid at the given position"""
-    pos = [(x, y), (x + 1, y + 1), (x - 1, y + 2), (x, y + 2), (x + 1, y + 2)]
+    pos = [(row, col), (row + 1, col + 1), (row - 1, col + 2), (row, col + 2), (row + 1, col + 2)]
     for i, j in pos:
         cells[j, i] = True
     return cells
 
 
-def add_glider_nw(cells: np.ndarray, x: int, y: int) -> np.ndarray:
+def add_glider_nw(cells: np.ndarray, row: int, col: int) -> np.ndarray:
     """Add North-West facing glider to the grid at the given position"""
-    pos = [(x, y), (x - 2, y - 1), (x - 2, y), (x - 2, y + 1), (x - 1, y - 1)]
+    pos = [(row, col), (row - 2, col - 1), (row - 2, col), (row - 2, col + 1), (row - 1, col - 1)]
     for i, j in pos:
         cells[j, i] = True
     return cells
@@ -237,11 +300,19 @@ def handle_events(grid: ConwayGoLGrid, running: bool, draw_menu: bool,
                     case pg.K_r: reset_colors(grid)
                     case pg.K_UP: change_grid_size(grid, running, 1)
                     case pg.K_DOWN: change_grid_size(grid, running, -1)
-                    case pg.K_KP1: load_random_verticals(grid)
-                    case pg.K_KP2: load_random_horizontals(grid)
-                    case pg.K_KP3: load_diagonal_cross(grid)
-                    case pg.K_KP4: load_topbottom_cross(grid)
-                    case pg.K_KP5: load_glider_armies(grid)
+                    case pg.K_KP1:
+                        if grid.cell_size != CELL_SIZES[len(CELL_SIZES)-1]:
+                            load_infinite_growth_line(grid)
+                    case pg.K_KP2:
+                        if grid.cell_size != CELL_SIZES[len(CELL_SIZES)-1]:
+                            load_infinite_growth_engine(grid)
+                    case pg.K_KP3:
+                        if grid.cell_size != CELL_SIZES[len(CELL_SIZES)-1]:
+                            load_gosper_glider_gun(grid)
+                    case pg.K_KP4: load_diagonal_cross(grid)
+                    case pg.K_KP5:
+                        if grid.cell_size != CELL_SIZES[len(CELL_SIZES)-1]:
+                            load_glider_armies(grid)
 
         mouse_button = pg.mouse.get_pressed()
         if mouse_button[0] or mouse_button[2]:
