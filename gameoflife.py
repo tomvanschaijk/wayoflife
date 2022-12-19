@@ -79,24 +79,25 @@ def create_help_menu() -> pg.Surface:
     help_menu.fill(HELP_MENU_COLOR)
     help_menu.set_alpha(HELP_MENU_ALPHA)
     font_name = pg.font.match_font("calibri")
-    font = pg.font.Font(font_name, 24, bold=True)
+    font = pg.font.Font(font_name, 24)
     text = "How to control the game"
     text_surface = font.render(text, True, (0, 0, 0))
     help_menu.blit(text_surface, (10, 10))
 
     for i, text in enumerate(HELP_MENU_TEXT):
-        font = pg.font.Font(font_name, 16, bold=True)
+        font = pg.font.Font(font_name, 16)
         text_surface = font.render(text, True, (0, 0, 0))
         help_menu.blit(text_surface, (50, 40 + ((i+1) * 24)))
     return help_menu
 
 
-def update_stats_display(text: str) -> None:
+def update_stats_display(text: str) -> pg.Surface:
     """Updates the caption"""
-    stats_display = pg.Surface((500, 30))
+    stats_display = pg.Surface((570, 30))
     stats_display.fill(STATS_COLOR)
     font_name = pg.font.match_font("calibri")
-    font = pg.font.Font(font_name, 14, bold=True)
+    font = pg.font.Font(font_name, 14)
+    font.bold = True
     text_surface = font.render(text, True, (0, 0, 0))
     stats_display.blit(text_surface, (5, 8))
 
@@ -263,7 +264,7 @@ def reset_colors(grid: ConwayGoLGrid) -> None:
 
 
 def handle_events(grid: ConwayGoLGrid, running: bool, draw_menu: bool,
-                  draw_stats: bool, fps: int) -> tuple[bool, bool, bool, int]:
+                  draw_stats: bool, fps: int) -> tuple[bool, bool, bool, bool, int]:
     """Handling the PyGame events in the main loop"""
     for event in pg.event.get():
         match event.type:

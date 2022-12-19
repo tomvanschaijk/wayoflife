@@ -59,7 +59,7 @@ class ConwayGoLGrid():
         return np.count_nonzero(self.__cells)
 
     @property
-    def alive_percentage(self) -> int:
+    def alive_percentage(self) -> float:
         """The amount of alive cells in the grid"""
         return np.count_nonzero(self.__cells) / self.__cells.size * 100
 
@@ -254,7 +254,7 @@ class ConwayGoLGrid():
 
     @staticmethod
     @njit(fastmath=True, cache=True)
-    def __create_neighbour_count(cells: np.ndarray) -> None:
+    def __create_neighbour_count(cells: np.ndarray) -> np.ndarray:
         """Create the neighbour count for all cells in the grid"""
         (rows, columns) = cells.shape
         neighbour_count = np.array([[0] * columns] * rows)
