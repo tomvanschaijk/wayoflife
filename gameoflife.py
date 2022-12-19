@@ -127,7 +127,7 @@ def load_random_cell_layout(grid: ConwayGoLGrid) -> None:
 def load_infinite_growth_line(grid: ConwayGoLGrid) -> None:
     """Place an infinitely growing line pattern on the grid"""
     cells = np.full(grid.shape, False, dtype=bool)
-    rows, cols = grid.shape
+    rows, _ = grid.shape
     row = rows // 2
     for col in range(5, 13):
         cells[row, col] = True
