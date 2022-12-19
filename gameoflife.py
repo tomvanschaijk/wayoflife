@@ -95,7 +95,6 @@ def create_help_menu() -> pg.Surface:
     help_menu.set_alpha(HELP_MENU_ALPHA)
     font_name = pg.font.match_font("calibri")
     font = pg.font.Font(font_name, 24)
-    font.bold = True
     text = "How to control the game"
     text_surface = font.render(text, True, (0, 0, 0))
     help_menu.blit(text_surface, (10, 10))
@@ -113,6 +112,7 @@ def update_stats_display(text: str) -> pg.surface.Surface:
     stats_display.fill(STATS_COLOR)
     font_name = pg.font.match_font("calibri")
     font = pg.font.Font(font_name, 14)
+    font.bold = True
     text_surface = font.render(text, True, (0, 0, 0))
     stats_display.blit(text_surface, (5, 8))
 
