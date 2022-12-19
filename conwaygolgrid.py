@@ -86,7 +86,7 @@ class ConwayGoLGrid():
         return np.count_nonzero(self.__cells)
 
     @property
-    def alive_percentage(self) -> int:
+    def alive_percentage(self) -> float:
         """The amount of alive cells in the grid"""
         return np.count_nonzero(self.__cells) / self.__cells.size * 100
 
@@ -378,7 +378,7 @@ class ConwayGoLGrid():
 
     @staticmethod
     @njit(fastmath=True, cache=True)
-    def __create_neighbour_count(cells: np.ndarray) -> None:
+    def __create_neighbour_count(cells: np.ndarray) -> np.ndarray:
         """Create the neighbour count for all cells in the grid"""
         (rows, columns) = cells.shape
         neighbour_count = np.array([[0] * columns] * rows)
@@ -438,7 +438,7 @@ class ConwayGoLGrid():
             else:
                 self.__survivor_duration[survivor] = 0
 
-    def __prepare_cells(self) -> dict[tuple[int, int, int], pg.Surface]:
+    def __prepare_cells(self) -> None:
         """Prepare a cell of each color, so we do not have to do this on the fly while drawing"""
         self.__prepared_cells = {}
         for color in [self.__new_color, self.__survivor_color, self.__dead_color]:
@@ -502,7 +502,7 @@ class ConwayGoLGrid():
         # For the smallest cell size, we'll not pay the cost of generating rectangles with bloom
         # The viewer wouldn't notice it, and it costs some frames cause of the amount of rectangles
         draw_function = (self.__simple_draw
-                         if self.__cell_size in {CellSize.XS,  CellSize.S}
+                         if self.__cell_size in {CellSize.XS, CellSize.S}
                          else self.__bloom_draw)
         for row, column, color in cells_to_redraw:
             dimensions = (column * self.__cell_size.value, row * self.__cell_size.value,
